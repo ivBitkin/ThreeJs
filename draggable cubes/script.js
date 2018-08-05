@@ -1,10 +1,13 @@
 window.onload = function() {
 
   var container, stats;
-	var camera, controls, scene, renderer;
+	var camera, controls, trackBallControls, scene, renderer;
   var objects = [];
-  // var group = new Group();
   
+  var startColor;
+  
+  
+  var figures;
   init();
   animate();
   
@@ -16,14 +19,14 @@ window.onload = function() {
     camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 5000 );
     camera.position.z = 1000;
     
-    controls = new THREE.TrackballControls( camera );
-    controls.rotateSpeed = 1.0;
-    controls.zoomSpeed = 1.2;
-    controls.panSpeed = 0.8;
-    controls.noZoom = false;
-    controls.noPan = false;
-    controls.staticMoving = true;
-    controls.dynamicDampingFactor = 0.3;
+    trackBallControls = new THREE.TrackballControls( camera );
+    trackBallControls.rotateSpeed = 1.0;
+    trackBallControls.zoomSpeed = 1.2;
+    trackBallControls.panSpeed = 0.8;
+    trackBallControls.noZoom = false;
+    trackBallControls.noPan = false;
+    trackBallControls.staticMoving = true;
+    trackBallControls.dynamicDampingFactor = 0.3;
 
 
     scene = new THREE.Scene();
@@ -40,11 +43,7 @@ window.onload = function() {
     light.shadow.mapSize.height = 1024;
     scene.add( light );
     
-    var options = {
-      Geometry: function getRandomInt(max) {
-        return Math.floor(Math.random() * Math.floor());
-      }
-    };
+    
     
 
     var geometry = [
@@ -58,20 +57,25 @@ window.onload = function() {
       return Math.floor(Math.random() * Math.floor(counter));
     };  
                 
-    for ( var i = 0; i < 40; i ++ ) {
-      var figures = new THREE.Mesh( geometry[getRandomInt()],
+    for ( var i = 0; i < 100; i ++ ) {
+      figures = new THREE.Mesh( geometry[getRandomInt()],
                     new THREE.MeshLambertMaterial( { color: Math.random() * 0x32a6a6 } ) );
-      figures.position.x = Math.random() * 1000 - 500;
-      figures.position.y = Math.random() * 600 - 300;
-      figures.position.z = Math.random() * 800 - 400;
-      figures.rotation.x = Math.random() * 2 * Math.PI;
-      figures.rotation.y = Math.random() * 2 * Math.PI;
-      figures.rotation.z = Math.random() * 2 * Math.PI;
+
+      var position = figures.position.set(Math.random() * 1000 - 500, 
+                                          Math.random() * 600 - 300,
+                                          Math.random() * (800 - 400));
+
+      var rotation = figures.rotation.set(Math.random() * 2 * Math.PI, 
+                                          Math.random() * 2 * Math.PI, 
+                                          Math.random() * 2 * Math.PI);
+      
       figures.castShadow = true;
       figures.receiveShadow = true;
 
       scene.add( figures );
       objects.push( figures );
+
+
      
     }
 
@@ -82,9 +86,23 @@ window.onload = function() {
     renderer.shadowMap.type = THREE.PCFShadowMap;
     container.appendChild( renderer.domElement );
 
-    var dragControls = new THREE.DragControls( objects, camera, renderer.domElement );
-    dragControls.addEventListener( 'dragstart', function ( event ) { controls.enabled = false; } );
-    dragControls.addEventListener( 'dragend', function ( event ) { controls.enabled = true; } );
+    var controls = new THREE.DragControls( objects, camera, renderer.domElement );
+    controls.addEventListener( 'dragstart', function ( event ) { trackBallControls.enabled = false; } );
+    controls.addEventListener( 'dragend', function ( event ) { trackBallControls.enabled = true; } );
+    controls.addEventListener( 'dragstart', dragStartCallback );
+    controls.addEventListener( 'dragend', dragendCallback );
+
+    function dragStartCallback(event) {
+      startColor = event.object.material.color.getHex();
+      event.object.material.color.setHex(0x2aed0c);
+    }
+     
+    function dragendCallback(event) {
+      event.object.material.color.setHex(startColor);
+    }
+
+   
+
 
     var info = document.createElement( 'div' );
     info.style.position = 'absolute';
@@ -113,7 +131,7 @@ window.onload = function() {
     stats.update();
   }
   function render() {
-    controls.update();
+    trackBallControls.update();
     renderer.render( scene, camera );
   }
 
